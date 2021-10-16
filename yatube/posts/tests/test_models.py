@@ -25,6 +25,5 @@ class PostModelTest(TestCase):
         """Тестирование правильного вывода __str__"""
         expected_group_name = self.group.title
         self.assertEqual(expected_group_name, str(self.group))
-        max_length = 15
-        length = len(str(self.post))
-        self.assertEqual(max_length, length)
+        expected_post_name = self.post.text[:15]
+        self.assertEqual(expected_post_name, str(self.post))

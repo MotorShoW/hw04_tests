@@ -27,7 +27,6 @@ class PostsFormTest(TestCase):
 
     def setUp(self):
         self.authorized_client = Client()
-        self.user = PostsFormTest.user
         self.authorized_client.force_login(self.user)
 
     def test_create_post_form(self):
@@ -45,6 +44,11 @@ class PostsFormTest(TestCase):
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': 'Name'}))
         self.assertEqual(Post.objects.count(), posts_count + 1)
+        index_response = self.authorized_client.get(reverse('posts:index'))
+        first_obj = index_response.context['page_obj'][0]
+        self.assertEqual(first_obj.text, form_data['text'])
+        self.assertEqual(first_obj.group, self.group)
+        self.assertEqual(first_obj.author, self.user)
 
     def test_edit_post_form(self):
         """При редактировании формы поста создается запись в БД"""
@@ -53,7 +57,7 @@ class PostsFormTest(TestCase):
             'text': 'Редактированный текст',
         }
         response = self.authorized_client.post(reverse(
-            'posts:post_edit', kwargs={'post_id': 1}),
+            'posts:post_edit', kwargs={'post_id': self.post.id}),
             data=form_data,
             follow=True,
         )
@@ -61,3 +65,5 @@ class PostsFormTest(TestCase):
         self.assertRedirects(response, reverse(
             'posts:post_detail', kwargs={'post_id': 1}))
         self.assertEqual(post_edit.text, form_data['text'])
+        self.assertEqual(post_edit.group, self.group)
+        self.assertEqual(post_edit.author, self.user)
