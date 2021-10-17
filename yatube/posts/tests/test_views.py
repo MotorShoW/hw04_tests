@@ -18,7 +18,7 @@ class PostsPagesTest(TestCase):
             slug='test-slug',
             description='Тестовое описание',
         )
-        cls.posts = Post.objects.create(
+        cls.post = Post.objects.create(
             author=cls.user,
             text='Тест текст',
             group=cls.group,
@@ -29,10 +29,11 @@ class PostsPagesTest(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
-    def assert_info(self, post_info):
-        self.assertEqual(post_info.text, self.posts.text)
-        self.assertEqual(post_info.group.title, self.group.title)
-        self.assertEqual(post_info.author.username, self.user.username)
+    def assert_info(self, post):
+        """Не понял, что тут от меня требуется :("""
+        self.assertEqual(post.text, self.post.text)
+        self.assertEqual(post.group, self.group)
+        self.assertEqual(post.author, self.user)
 
     def test_pages_uses_correct_template(self):
         """Проверка использования URL соответствующего шаблона"""
@@ -42,9 +43,9 @@ class PostsPagesTest(TestCase):
                 'posts/group_list.html'),
             reverse('posts:profile', kwargs={'username': self.user}): (
                 'posts/profile.html'),
-            reverse('posts:post_detail', kwargs={'post_id': self.posts.id}): (
+            reverse('posts:post_detail', kwargs={'post_id': self.post.id}): (
                 'posts/post_detail.html'),
-            reverse('posts:post_edit', kwargs={'post_id': self.posts.id}): (
+            reverse('posts:post_edit', kwargs={'post_id': self.post.id}): (
                 'posts/create_post.html'),
             reverse('posts:post_create'): 'posts/create_post.html',
         }
@@ -62,7 +63,7 @@ class PostsPagesTest(TestCase):
     def test_group_list_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом"""
         response = self.guest_client.get(reverse(
-            'posts:group_list', kwargs={'slug': 'test-slug'}))
+            'posts:group_list', kwargs={'slug': self.group.slug}))
         post = response.context['page_obj'][0]
         self.assert_info(post)
 
@@ -76,7 +77,7 @@ class PostsPagesTest(TestCase):
     def test_post_detail_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом"""
         response = self.guest_client.get(reverse(
-            'posts:post_detail', kwargs={'post_id': 1}))
+            'posts:post_detail', kwargs={'post_id': self.post.id}))
         post = response.context['post']
         self.assert_info(post)
 
@@ -95,7 +96,7 @@ class PostsPagesTest(TestCase):
     def test_post_edit_show_correct_context(self):
         """Шаблон post_edit сформирован с правильным контекстом"""
         response = self.authorized_client.get(reverse(
-            'posts:post_edit', kwargs={'post_id': self.posts.id}))
+            'posts:post_edit', kwargs={'post_id': self.post.id}))
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.models.ModelChoiceField,
@@ -105,37 +106,22 @@ class PostsPagesTest(TestCase):
                 form_field = response.context.get('form').fields.get(value)
                 self.assertIsInstance(form_field, expected)
 
-    def test_new_post_shows_on_index_page(self):
-        """Пост появился на главной странице"""
+    def test_post_shows_on_pages(self):
+        """Пост появился на страницах index, group, profile"""
         new_post = Post.objects.create(
             author=self.user,
             text='Новый пост',
             group=self.group,
         )
-        response = self.authorized_client.get(reverse('posts:index'))
-        self.assertContains(response, new_post)
-
-    def test_post_shows_on_group_page(self):
-        """Пост появился на странице группы"""
-        new_post = Post.objects.create(
-            author=self.user,
-            text='Новый пост',
-            group=self.group,
-        )
-        response = self.authorized_client.get(reverse(
-            'posts:group_list', kwargs={'slug': self.group.slug}))
-        self.assertContains(response, new_post)
-
-    def test_post_shows_on_profile_page(self):
-        """Пост появился на странице профиля"""
-        new_post = Post.objects.create(
-            author=self.user,
-            text='Новый пост',
-            group=self.group,
-        )
-        response = self.authorized_client.get(reverse(
-            'posts:profile', kwargs={'username': self.user}))
-        self.assertContains(response, new_post)
+        urls = [
+            reverse('posts:index'),
+            reverse('posts:group_list', kwargs={'slug': self.group.slug}),
+            reverse('posts:profile', kwargs={'username': self.user}),
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                response = self.authorized_client.get(url)
+                self.assertContains(response, new_post)
 
     def test_post_not_in_other_group_page(self):
         """Пост НЕ появился на странице чужой группы"""

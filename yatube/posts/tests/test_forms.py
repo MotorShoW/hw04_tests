@@ -42,13 +42,14 @@ class PostsFormTest(TestCase):
             follow=True,
         )
         self.assertRedirects(response, reverse(
-            'posts:profile', kwargs={'username': 'Name'}))
+            'posts:profile', kwargs={'username': self.user}))
         self.assertEqual(Post.objects.count(), posts_count + 1)
         index_response = self.authorized_client.get(reverse('posts:index'))
         first_obj = index_response.context['page_obj'][0]
         self.assertEqual(first_obj.text, form_data['text'])
         self.assertEqual(first_obj.group, self.group)
         self.assertEqual(first_obj.author, self.user)
+        self.assertContains(response, self.post)
 
     def test_edit_post_form(self):
         """При редактировании формы поста создается запись в БД"""
@@ -63,7 +64,14 @@ class PostsFormTest(TestCase):
         )
         post_edit = response.context['post']
         self.assertRedirects(response, reverse(
-            'posts:post_detail', kwargs={'post_id': 1}))
+            'posts:post_detail', kwargs={'post_id': self.post.id}))
         self.assertEqual(post_edit.text, form_data['text'])
         self.assertEqual(post_edit.group, self.group)
         self.assertEqual(post_edit.author, self.user)
+        self.assertTrue(
+            Post.objects.filter(
+                text='Редактированный текст',
+                author=self.user,
+                group=self.group,
+            ).exists()
+        )
