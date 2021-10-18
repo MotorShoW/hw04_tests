@@ -29,11 +29,11 @@ class PostsPagesTest(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
-    def assert_info(self, post):
+    def assert_info(self, post, expected_post):
         """Не понял, что тут от меня требуется :("""
-        self.assertEqual(post.text, self.post.text)
-        self.assertEqual(post.group, self.group)
-        self.assertEqual(post.author, self.user)
+        self.assertEqual(post.text, expected_post.text)
+        self.assertEqual(post.group, expected_post.group)
+        self.assertEqual(post.author, expected_post.author)
 
     def test_pages_uses_correct_template(self):
         """Проверка использования URL соответствующего шаблона"""
@@ -58,28 +58,32 @@ class PostsPagesTest(TestCase):
         """Шаблон index сформирован с правильным контекстом"""
         response = self.guest_client.get(reverse('posts:index'))
         post = response.context['page_obj'][0]
-        self.assert_info(post)
+        expected_post = self.post
+        self.assert_info(post, expected_post)
 
     def test_group_list_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом"""
         response = self.guest_client.get(reverse(
             'posts:group_list', kwargs={'slug': self.group.slug}))
         post = response.context['page_obj'][0]
-        self.assert_info(post)
+        expected_post = self.post
+        self.assert_info(post, expected_post)
 
     def test_profile_show_correct_context(self):
         """Шаблон profile сформирован с правильным контекстом"""
         response = self.guest_client.get(reverse(
             'posts:profile', kwargs={'username': self.user}))
         post = response.context['page_obj'][0]
-        self.assert_info(post)
+        expected_post = self.post
+        self.assert_info(post, expected_post)
 
     def test_post_detail_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом"""
         response = self.guest_client.get(reverse(
             'posts:post_detail', kwargs={'post_id': self.post.id}))
         post = response.context['post']
-        self.assert_info(post)
+        expected_post = self.post
+        self.assert_info(post, expected_post)
 
     def test_post_create_show_correct_context(self):
         """Шаблон post_create сформирован с правильным контекстом"""

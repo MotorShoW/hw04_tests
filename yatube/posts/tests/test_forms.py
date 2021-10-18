@@ -49,7 +49,13 @@ class PostsFormTest(TestCase):
         self.assertEqual(first_obj.text, form_data['text'])
         self.assertEqual(first_obj.group, self.group)
         self.assertEqual(first_obj.author, self.user)
-        self.assertContains(response, self.post)
+        self.assertTrue(
+            Post.objects.filter(
+                text=form_data['text'],
+                author=self.user,
+                group=self.group,
+            ).exists()
+        )
 
     def test_edit_post_form(self):
         """При редактировании формы поста создается запись в БД"""
@@ -70,7 +76,7 @@ class PostsFormTest(TestCase):
         self.assertEqual(post_edit.author, self.user)
         self.assertTrue(
             Post.objects.filter(
-                text='Редактированный текст',
+                text=form_data['text'],
                 author=self.user,
                 group=self.group,
             ).exists()
