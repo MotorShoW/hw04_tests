@@ -30,7 +30,7 @@ class PostsPagesTest(TestCase):
         self.authorized_client.force_login(self.user)
 
     def assert_info(self, post, expected_post):
-        """Не понял, что тут от меня требуется :("""
+        """Проверка ожидаемого поста"""
         self.assertEqual(post.text, expected_post.text)
         self.assertEqual(post.group, expected_post.group)
         self.assertEqual(post.author, expected_post.author)
